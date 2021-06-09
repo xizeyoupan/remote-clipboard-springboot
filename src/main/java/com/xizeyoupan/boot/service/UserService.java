@@ -3,7 +3,7 @@ package com.xizeyoupan.boot.service;
 import com.xizeyoupan.boot.bean.User;
 
 public interface UserService {
-    User getUserByName(String name);
+    User getUserByName(String name,String password);
 
-    User deleteUser(User user);
+    User deleteConnectionUser(User user);
 }
