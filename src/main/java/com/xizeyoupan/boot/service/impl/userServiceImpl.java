@@ -28,32 +28,30 @@ public class userServiceImpl implements UserService {
     TokenService tokenService;
 
     @Override
-    public User getUserByName(String name, String password) {
-        User user = (User) caffeineCache.getIfPresent(name);
-        String nameUuid = Util.getUUID(name);
-        String userConnectionsUuid = Util.getUUID("connection" + name);
+    public User getUserByName(String username, String password) {
+        User user = (User) caffeineCache.getIfPresent(Util.keyForUser(username));
         List<Connection> connections = new ArrayList<>();
         if (user == null) {
-            String token = tokenService.getToken(name, String.valueOf(0), password);
+            String token = tokenService.getToken(username, String.valueOf(0), password);
             connections.add(new Connection(0, token, new Date().getTime()));
-            userTemplate.setUsername(name);
+            userTemplate.setUsername(username);
             userTemplate.setToken(token);
             userTemplate.setCurrentConnectionId(0);
-            caffeineCache.put(userConnectionsUuid, connections);
-            caffeineCache.put(nameUuid, password);
-            caffeineCache.put(name, userTemplate);
+            caffeineCache.put(Util.keyForConnections(username), connections);
+            caffeineCache.put(Util.keyForPassword(username), password);
+            caffeineCache.put(Util.keyForUser(username), userTemplate);
         } else {
-            if (Objects.equals(caffeineCache.getIfPresent(nameUuid), password)) {
-                connections = (ArrayList<Connection>) caffeineCache.getIfPresent(userConnectionsUuid);
+            if (Objects.equals(caffeineCache.getIfPresent(Util.keyForPassword(username)), password)) {
+                connections = (ArrayList<Connection>) caffeineCache.getIfPresent(Util.keyForConnections(username));
                 long currentConnectionId = connections.get(connections.size() - 1).getId() + 1;
-                String token = tokenService.getToken(name, String.valueOf(currentConnectionId), password);
+                String token = tokenService.getToken(username, String.valueOf(currentConnectionId), password);
                 Connection connection = new Connection(currentConnectionId, token, new Date().getTime());
                 connections.add(connection);
-                userTemplate.setUsername(name);
+                userTemplate.setUsername(username);
                 userTemplate.setCurrentConnectionId(currentConnectionId);
                 userTemplate.setToken(token);
-                caffeineCache.put(userConnectionsUuid, connections);
-                caffeineCache.put(name, userTemplate);
+                caffeineCache.put(Util.keyForConnections(username), connections);
+                caffeineCache.put(Util.keyForUser(username), userTemplate);
             } else {
                 return null;
             }

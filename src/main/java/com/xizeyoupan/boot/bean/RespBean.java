@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RespBean {
-    private int status;
+    private int code;
     private String msg;
     private Object data;
 }
