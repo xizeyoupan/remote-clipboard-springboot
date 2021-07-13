@@ -3,6 +3,7 @@ package com.xizeyoupan.boot.controller;
 import com.xizeyoupan.boot.bean.RespBean;
 import com.xizeyoupan.boot.bean.User;
 import com.xizeyoupan.boot.service.UserService;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +29,10 @@ public class UserController {
         if (user == null) {
             return new RespBean(-1, "……隻能説，妳這個密碼錯了妳知道嗎ベΔ", null);
         } else {
-            return new RespBean(200, "找到板子了，你是连接这个板子的的第" + user.getCurrentConnectionId() + "位火伴！", user);
+            return new RespBean(200, "找到板子了，你是连接这个板子的的第" + user.getConnectionNumber() + "位火伴！", user);
         }
 
     }
+
+
 }

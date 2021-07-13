@@ -7,8 +7,8 @@ public class Util {
         return UUID.nameUUIDFromBytes(str.getBytes()).toString();
     }
 
-    public static String keyForConnections(String username) {
-        return "user/" + username + "/connections";
+    public static String keyForClips(String username) {
+        return "user/" + username + "/clips";
     }
 
     public static String keyForPassword(String username) {
