@@ -6,5 +6,3 @@ spring:
     resources:
       static-locations: classpath:/static/dist/
 
-user-default:
-  avatar-url: default_avatar.png
