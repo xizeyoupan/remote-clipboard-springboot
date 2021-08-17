@@ -2,11 +2,12 @@ package com.xizeyoupan.remoteclipboard.entity;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class User {
-    private String userName;
-    private String hashPassword;
-    private int version;
-    private int tot;
-    private String token;
+    private String username;
+    private String password;
+    private List<Clip> timeline;
+    private Integer tot;
 }

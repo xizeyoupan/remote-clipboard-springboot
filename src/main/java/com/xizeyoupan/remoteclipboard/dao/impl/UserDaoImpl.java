@@ -18,13 +18,13 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User getByUserName(String userName) {
-        return (User) caffeineCache.getIfPresent(KeyGenerator.keyForUser(userName));
+    public User getByUsername(String username) {
+        return (User) caffeineCache.getIfPresent(KeyGenerator.keyForUser(username));
     }
 
     @Override
     public void save(User user) {
-        caffeineCache.put(KeyGenerator.keyForUser(user.getUserName()), user);
+        caffeineCache.put(KeyGenerator.keyForUser(user.getUsername()), user);
     }
 
 

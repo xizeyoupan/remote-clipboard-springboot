@@ -3,56 +3,74 @@ package com.xizeyoupan.remoteclipboard.utils;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.xizeyoupan.remoteclipboard.entity.Connection;
+import com.xizeyoupan.remoteclipboard.dao.UserDao;
 import com.xizeyoupan.remoteclipboard.entity.User;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
+import java.util.Map;
 
 @Slf4j
+@Component
 public class TokenUtil {
-    public static String getToken(User user, Connection connection) {
-        return JWT.create()
-                .withClaim("UserName", user.getUserName())
-                .withClaim("connectionId", connection.getId())
-                .sign(Algorithm.HMAC256(user.getHashPassword()));
+
+    final UserDao userDao;
+
+    private final static Integer longExpires = 1000 * 3600 * 24 * 7;
+
+    public TokenUtil(UserDao userDao) {
+        this.userDao = userDao;
     }
 
-    public static String getToken(User user) {
-        int expires = 5 * 1000;
+    public static String getToken(User user, int connectionId) {
         return JWT.create()
-                .withClaim("UserName", user.getUserName())
+                .withClaim("username", user.getUsername())
+                .withClaim("connectionId", connectionId)
                 .withIssuedAt(new Date())
-                .withExpiresAt(new Date(System.currentTimeMillis() + expires))
-                .sign(Algorithm.HMAC256(user.getHashPassword()));
+                .withExpiresAt(new Date(System.currentTimeMillis() + longExpires))
+                .sign(Algorithm.HMAC256(user.getPassword()));
     }
 
-    public static boolean validToken(User user, String token) throws Exception {
-        JWTVerifier verifier = JWT.require(Algorithm.HMAC256(user.getHashPassword()))
-                .withClaim("UserName", user.getUserName())
-                .build();
+    public static String getUsernameByToken(String token) {
+        DecodedJWT jwt = JWT.decode(token);
+        Map<String, Claim> claims = jwt.getClaims();
+        return claims.get("username").asString();
+    }
 
+    public static Integer getConnectionIdByToken(String token) {
+        DecodedJWT jwt = JWT.decode(token);
+        Map<String, Claim> claims = jwt.getClaims();
+        return claims.get("connectionId").asInt();
+    }
+
+    public boolean validToken(String token) {
+
+        String username;
         try {
-            DecodedJWT jwt = verifier.verify(token);
-            return true;
+            username = getUsernameByToken(token);
         } catch (Exception e) {
-            log.debug(e.getMessage());
+            log.error("Token error : The Claim 'username' value can't be parsed.");
             return false;
         }
-    }
 
-    public static boolean validToken(User user, Connection connection, String token) throws Exception {
-        JWTVerifier verifier = JWT.require(Algorithm.HMAC256(user.getHashPassword()))
-                .withClaim("UserName", user.getUserName())
-                .withClaim("connectionId", connection.getId())
-                .build();
+        User user = userDao.getByUsername(username);
+
+        if (ObjectUtils.isEmpty(user)) {
+            log.error("Token error : No such user.");
+            return false;
+        }
+
+        JWTVerifier verifier = JWT.require(Algorithm.HMAC256(user.getPassword())).build();
 
         try {
-            DecodedJWT jwt = verifier.verify(token);
+            verifier.verify(token);
             return true;
         } catch (Exception e) {
-            log.debug(e.getMessage());
+            log.error("Token verify error, " + e);
             return false;
         }
     }

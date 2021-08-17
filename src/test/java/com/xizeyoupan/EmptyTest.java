@@ -8,6 +8,6 @@ public class EmptyTest {
 
     @Test
     public void testEmpty(){
-        System.out.println("ObjectUtils.isEmpty(\"\") = " + ObjectUtils.isEmpty(""));
+        assert !ObjectUtils.isEmpty(0);
     }
 }
