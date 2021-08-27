@@ -1,0 +1,5 @@
+services:
+  remoteclipboard:
+    image: intemd/remoteclipboard
+    ports:
+      - 8233:8233
