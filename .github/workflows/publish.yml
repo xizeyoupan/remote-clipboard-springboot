@@ -63,6 +63,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/remoteclipboard:latest
 
+
       - name: Depoly to okteto, using docker-compose.yml
         run: |
           curl https://get.okteto.com -sSfL | sh
@@ -71,7 +72,6 @@ jobs:
           okteto namespace
           okteto stack deploy --wait
 
-
       - name: Depoly to railway, using Dockerfile
         run: |
           npm i -g @railway/cli
@@ -79,11 +79,11 @@ jobs:
           cd $GITHUB_WORKSPACE/springboot
           railway up
         env:
-          RAILWAY_TOKEN: ${{  secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Depoly to flyio, using fly.toml
         uses: superfly/flyctl-actions@master
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         with:
-          args: "deploy"
+          args: "deploy -c ./springboot"
