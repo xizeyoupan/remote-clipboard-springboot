@@ -1,6 +1,7 @@
 app = "aged-sun-6282"
 
 kill_signal = "SIGINT"
+protocol = "https"
 kill_timeout = 5
 processes = []
 
