@@ -1,14 +1,26 @@
 server:
   port: ${BOOT_SERVER_PORT:8233}
+  compression:
+    enabled: true
 
 spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   web:
     resources:
       static-locations: classpath:/static/dist/
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 11MB
+
+oss:
+  name: ucloud
+  ucloud-bucket-name: ${UCLOUD_BUCKET_NAME}
+  ucloud-bucket-url: ${UCLOUD_BUCKET_URL}
+  ucloud-public-key: ${UCLOUD_PUBLIC_KEY}
+  ucloud-private-key: ${UCLOUD_PRIVATE_KEY}
+  ucloud-prefix: ${UCLOUD_PREFIX}
+
 
 logging:
   level:

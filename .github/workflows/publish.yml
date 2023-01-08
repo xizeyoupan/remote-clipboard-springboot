@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 18
 
       - name: Build vue and copy dist
         run: |
@@ -63,27 +63,26 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/remoteclipboard:latest
 
+      # - name: Depoly to okteto, using docker-compose.yml
+      #   run: |
+      #     curl https://get.okteto.com -sSfL | sh
+      #     okteto login --token ${{ secrets.OKTETO_TOKEN }}
+      #     cd $GITHUB_WORKSPACE/springboot
+      #     okteto namespace
+      #     okteto stack deploy --no-cache --wait
 
-      - name: Depoly to okteto, using docker-compose.yml
-        run: |
-          curl https://get.okteto.com -sSfL | sh
-          okteto login --token ${{ secrets.OKTETO_TOKEN }}
-          cd $GITHUB_WORKSPACE/springboot
-          okteto namespace
-          okteto stack deploy --no-cache --wait
-
-      - name: Depoly to railway, using Dockerfile
-        run: |
-          npm i -g @railway/cli
-          railway link 7a3e56a7-37e5-4a9b-8c7b-5815432176f5
-          cd $GITHUB_WORKSPACE/springboot
-          railway up
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # - name: Depoly to railway, using Dockerfile
+      #   run: |
+      #     npm i -g @railway/cli
+      #     railway link 7a3e56a7-37e5-4a9b-8c7b-5815432176f5
+      #     cd $GITHUB_WORKSPACE/springboot
+      #     railway up
+      #   env:
+      #     RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Depoly to flyio, using fly.toml
         uses: superfly/flyctl-actions@master
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         with:
-          args: "deploy -c ./springboot"
+          args: "deploy ./springboot"

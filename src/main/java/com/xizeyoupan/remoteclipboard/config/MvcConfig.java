@@ -19,6 +19,6 @@ public class MvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(applicationContext.getBean("connectionInterceptor", ConnectionInterceptor.class))
                 .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/v1/users", "/error");
+                .excludePathPatterns("/api/v1/user", "/api/v1/user/add", "/error");
     }
 }

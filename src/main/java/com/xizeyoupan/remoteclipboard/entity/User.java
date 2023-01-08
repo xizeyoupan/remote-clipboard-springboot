@@ -1,13 +1,14 @@
 package com.xizeyoupan.remoteclipboard.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
-import java.util.List;
 
 @Data
 public class User {
     private String username;
     private String password;
-    private List<Clip> timeline;
-    private Integer tot;
+    @TableId(type = IdType.AUTO)
+    private Integer id;
 }

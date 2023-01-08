@@ -1,20 +1,24 @@
 package com.xizeyoupan.remoteclipboard.entity;
 
-import com.xizeyoupan.remoteclipboard.utils.ClipMode;
-import lombok.AllArgsConstructor;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
-@AllArgsConstructor
 public class Clip {
-    private Integer connectionId;
-    private String blocked;
-    private String username;
+    @TableId(type = IdType.AUTO)
+    private Integer id;
+    private Date createTime;
     private Date modifyTime;
     private String contentType;
-    private ClipMode clipMode;
+    private Integer status; //1:OK, 2:blocked
     private String fileName;
     private String uuid;
+    private String ossName;
+    private String fileNameInRemote;
+    private Integer userId;
+    private Integer size;
+
 }
