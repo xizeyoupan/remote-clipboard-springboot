@@ -1,16 +1,18 @@
 package com.xizeyoupan.remoteclipboard.controller.v1;
 
 import com.xizeyoupan.remoteclipboard.entity.User;
-import com.xizeyoupan.remoteclipboard.oss.UcloudConfig;
 import com.xizeyoupan.remoteclipboard.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.ObjectUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -22,15 +24,13 @@ import java.util.Map;
 public class UserController {
 
     private UserService userService;
-    private UcloudConfig ucloudConfig;
 
-    public UserController(UserService userService, UcloudConfig ucloudConfig) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.ucloudConfig = ucloudConfig;
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> login(@RequestBody User user, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody User user, HttpSession session, HttpServletResponse response) {
         Map<String, Object> map = new HashMap<>();
 
         if (ObjectUtils.isEmpty(user) || ObjectUtils.isEmpty(user.getPassword()) || ObjectUtils.isEmpty(user.getUsername())) {
@@ -51,11 +51,13 @@ public class UserController {
 
         } catch (RuntimeException e) {
             map.put("msg", e.getMessage());
+            log.error(e.getMessage());
             return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
         }
         map.put("msg", "Success");
         session.setAttribute("username", user.getUsername());
         session.setAttribute("password", user.getPassword());
+
         return new ResponseEntity<>(map, HttpStatus.OK);
 
     }
@@ -86,12 +88,5 @@ public class UserController {
 
     }
 
-    @GetMapping("/config")
-    public ResponseEntity<Map<String, Object>> getConfig() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("data", ucloudConfig);
-        return new ResponseEntity<>(map, HttpStatus.OK);
-
-    }
 
 }

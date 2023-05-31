@@ -7,19 +7,21 @@ CREATE TABLE user
     PRIMARY KEY (id)
 );
 
-DROP table if EXISTS clip;
-CREATE TABLE clip
+DROP table if EXISTS file;
+CREATE TABLE file
 (
-    id               BIGINT NOT NULL AUTO_INCREMENT,
-    create_time       DATETIME NULL DEFAULT NULL,
-    modify_time       DATETIME NULL DEFAULT NULL,
-    content_type      VARCHAR(30) NULL DEFAULT NULL,
-    status           INT NULL DEFAULT NULL,
-    file_name         VARCHAR(260) NULL DEFAULT NULL,
-    uuid             VARCHAR(40) NULL DEFAULT NULL,
-    oss_name          VARCHAR(30) NULL DEFAULT NULL,
-    file_name_in_remote VARCHAR(260) NULL DEFAULT NULL,
-    user_id           BIGINT NULL DEFAULT NULL,
-    size             BIGINT NULL DEFAULT NULL,
+    id            BIGINT NOT NULL AUTO_INCREMENT,
+    create_time   BIGINT NULL DEFAULT NULL,
+    last_modified BIGINT NULL DEFAULT NULL,
+    uuid          VARCHAR(40) NULL DEFAULT NULL,
+    mime_type     VARCHAR(30) NULL DEFAULT NULL,
+    path          VARCHAR(1024) NULL DEFAULT NULL,
+    storage       VARCHAR(64) NULL DEFAULT NULL,
+    type          VARCHAR(64) NULL DEFAULT NULL,
+    visibility    VARCHAR(64) NULL DEFAULT NULL,
+    basename      VARCHAR(1024) NULL DEFAULT NULL,
+    extension     VARCHAR(64) NULL DEFAULT NULL,
+    user_id       BIGINT NULL DEFAULT NULL,
+    file_size     BIGINT NULL DEFAULT NULL,
     PRIMARY KEY (id)
 );

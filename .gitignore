@@ -27,3 +27,5 @@ pnpm-debug.log*
 *.war
 target
 log
+
+src/main/resources/application-dev.yaml
