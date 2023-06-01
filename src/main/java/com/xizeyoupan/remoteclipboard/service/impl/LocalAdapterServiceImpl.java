@@ -6,6 +6,7 @@ import com.xizeyoupan.remoteclipboard.entity.File;
 import com.xizeyoupan.remoteclipboard.entity.User;
 import com.xizeyoupan.remoteclipboard.service.AdapterService;
 import com.xizeyoupan.remoteclipboard.service.UserService;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
 import java.io.*;
 import java.net.URLConnection;
 import java.nio.file.Files;

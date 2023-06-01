@@ -2,10 +2,10 @@ app:
   origin: ${ALLOW_ORIGIN:*}
   adapter:
     local-adapter:
-      file-path: ${LOCAL_ADAPTER_FILE_PATH:/file_data/}
+      file-path: ${LOCAL_ADAPTER_FILE_PATH:/app/file_data/}
 
 server:
-  port: ${BOOT_SERVER_PORT:8233}
+  port: ${PORT:8233}
   compression:
     enabled: true
 

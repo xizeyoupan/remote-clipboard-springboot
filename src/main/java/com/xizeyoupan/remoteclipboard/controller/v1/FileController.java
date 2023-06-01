@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xizeyoupan.remoteclipboard.entity.File;
 import com.xizeyoupan.remoteclipboard.entity.Index;
 import com.xizeyoupan.remoteclipboard.service.AdapterService;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.InputStreamResource;
@@ -24,9 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -39,7 +39,6 @@ import java.util.Map;
 @Slf4j
 @RequestMapping("/api/v1")
 public class FileController {
-
     private final ApplicationContext applicationContext;
     private AdapterService adapterService;
     private List<String> storages;
