@@ -1,7 +1,9 @@
 package com.xizeyoupan.remoteclipboard.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.xizeyoupan.remoteclipboard.dao.FileDao;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xizeyoupan.remoteclipboard.mapper.FileMapper;
 import com.xizeyoupan.remoteclipboard.entity.File;
 import com.xizeyoupan.remoteclipboard.entity.User;
 import com.xizeyoupan.remoteclipboard.service.AdapterService;
@@ -19,6 +21,7 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -26,15 +29,15 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class LocalAdapterServiceImpl implements AdapterService {
+public class LocalAdapterServiceImpl extends ServiceImpl<FileMapper, File> implements AdapterService {
     private final String adapterName = "local";
-    private FileDao fileDao;
-    private UserService userService;
+    private final FileMapper fileMapper;
+    private final UserService userService;
     @Value("${app.adapter.local-adapter.file-path}")
     private String localSavePath;
 
-    public LocalAdapterServiceImpl(FileDao fileDao, UserService userService) {
-        this.fileDao = fileDao;
+    public LocalAdapterServiceImpl(FileMapper fileMapper, UserService userService) {
+        this.fileMapper = fileMapper;
         this.userService = userService;
     }
 
@@ -51,7 +54,7 @@ public class LocalAdapterServiceImpl implements AdapterService {
         QueryWrapper<File> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("path", path);
         queryWrapper.eq("user_id", user.getId());
-        return fileDao.selectOne(queryWrapper);
+        return fileMapper.selectOne(queryWrapper);
     }
 
     @Override
@@ -95,8 +98,8 @@ public class LocalAdapterServiceImpl implements AdapterService {
         inputStream.close();
         fileOutputStream.close();
 
-        if (exists) fileDao.updateById(file);
-        else fileDao.insert(file);
+        if (exists) fileMapper.updateById(file);
+        else fileMapper.insert(file);
 
         return file;
     }
@@ -116,7 +119,7 @@ public class LocalAdapterServiceImpl implements AdapterService {
         file.setType("dir");
         file.setVisibility("public");
 
-        fileDao.insert(file);
+        fileMapper.insert(file);
         return file;
 
     }
@@ -128,7 +131,7 @@ public class LocalAdapterServiceImpl implements AdapterService {
         queryWrapper.eq("user_id", user.getId());
         queryWrapper.like("path", path + "%");
         queryWrapper.notLike("path", path + "%/%");
-        return fileDao.selectList(queryWrapper);
+        return fileMapper.selectList(queryWrapper);
     }
 
     @Override
@@ -137,7 +140,7 @@ public class LocalAdapterServiceImpl implements AdapterService {
         QueryWrapper<File> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", user.getId());
         queryWrapper.like("path", path + "%" + filter + "%");
-        return fileDao.selectList(queryWrapper);
+        return fileMapper.selectList(queryWrapper);
     }
 
     @Override
@@ -152,7 +155,7 @@ public class LocalAdapterServiceImpl implements AdapterService {
         FileOutputStream fileOutputStream = new FileOutputStream(fileName);
         fileOutputStream.close();
 
-        fileDao.insert(file);
+        fileMapper.insert(file);
         return file;
     }
 
@@ -169,52 +172,76 @@ public class LocalAdapterServiceImpl implements AdapterService {
         file.setMimeType(URLConnection.guessContentTypeFromName(name));
         file.setLastModified(new Date().getTime() / 1000);
         file.setPath(filePath);
-        fileDao.updateById(file);
+        fileMapper.updateById(file);
 
         if (Objects.equals(file.getType(), "dir")) {
             User user = userService.getByUsername(username);
-            QueryWrapper<File> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("user_id", user.getId());
-            queryWrapper.like("path", item + "/%");
-
-            List<File> affectedFiles = fileDao.selectList(queryWrapper);
-            for (File affectedFile : affectedFiles) {
-                String affectedFilePath = affectedFile.getPath();
-                affectedFile.setPath(affectedFilePath.replaceFirst(item, filePath));
-                log.info("Change path: " + affectedFile.getPath());
-                fileDao.updateById(affectedFile);
-            }
+            UpdateWrapper<File> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("user_id", user.getId());
+            updateWrapper.like("path", item + "/%");
+            String format = MessageFormat.format("`path` = REPLACE(`path`, ''{0}'', ''{1}'')", item, filePath);
+            updateWrapper.setSql(format);
+            update(updateWrapper);
         }
         return file;
     }
 
     @Override
     public boolean delete(String path, String type, String username) throws IOException {
-
         if (Objects.equals(type, "file")) {
             File file = getFileInfo(path, username);
-            fileDao.deleteById(file);
+            fileMapper.deleteById(file);
             Path localPath = Paths.get(localSavePath + file.getUuid());
             Files.delete(localPath);
             return true;
         } else if (Objects.equals(type, "dir")) {
             File dir = getFileInfo(path, username);
-            fileDao.deleteById(dir);
+            fileMapper.deleteById(dir);
 
             User user = userService.getByUsername(username);
             if (!path.endsWith("/")) path += "/";
             QueryWrapper<File> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("user_id", user.getId());
             queryWrapper.like("path", path + "%");
-            List<File> files = fileDao.selectList(queryWrapper);
+            List<File> files = fileMapper.selectList(queryWrapper);
+            remove(queryWrapper);
 
             for (File file : files) {
-                fileDao.deleteById(file);
                 if (file.getType().equals("dir")) continue;
                 Path localPath = Paths.get(localSavePath + file.getUuid());
                 log.info("Delete local file: " + localPath);
                 Files.delete(localPath);
             }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean move(String dest, String path, String type, String username) {
+        if (Objects.equals(type, "file")) {
+            File file = getFileInfo(path, username);
+            file.setPath(dest + '/' + file.getBasename());
+            fileMapper.updateById(file);
+            return true;
+        } else if (Objects.equals(type, "dir")) {
+            File dir = getFileInfo(path, username);
+            String[] strings = path.split("/");
+            String dirname = strings[strings.length - 1];
+
+            dir.setPath(dest + '/' + dirname);
+            fileMapper.updateById(dir);
+
+            User user = userService.getByUsername(username);
+            if (!path.endsWith("/")) path += "/";
+            UpdateWrapper<File> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("user_id", user.getId());
+            updateWrapper.like("path", path + "%");
+            String newPath = dest + '/' + dir.getBasename() + '/';
+            String pattern = "`path` = REPLACE(`path`, ''{0}'', ''{1}'')";
+            String format = MessageFormat.format(pattern, path, newPath);
+            updateWrapper.setSql(format);
+            update(updateWrapper);
             return true;
         }
         return false;

@@ -1,7 +1,8 @@
 package com.xizeyoupan.remoteclipboard.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.xizeyoupan.remoteclipboard.dao.UserDao;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xizeyoupan.remoteclipboard.mapper.UserMapper;
 import com.xizeyoupan.remoteclipboard.entity.User;
 import com.xizeyoupan.remoteclipboard.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +13,12 @@ import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
-    UserDao userDao;
+    UserMapper userMapper;
 
-    public UserServiceImpl(UserDao userDao) {
-        this.userDao = userDao;
+    public UserServiceImpl(UserMapper userMapper) {
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -25,7 +26,7 @@ public class UserServiceImpl implements UserService {
         String password = DigestUtils.md5DigestAsHex(user.getPassword().getBytes(StandardCharsets.UTF_8));
         user.setPassword(password);
 
-        userDao.insert(user);
+        userMapper.insert(user);
         return user;
     }
 
@@ -33,6 +34,6 @@ public class UserServiceImpl implements UserService {
     public User getByUsername(String username) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username", username);
-        return userDao.selectOne(queryWrapper);
+        return userMapper.selectOne(queryWrapper);
     }
 }

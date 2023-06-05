@@ -1,5 +1,6 @@
 package com.xizeyoupan.remoteclipboard.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.xizeyoupan.remoteclipboard.entity.File;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -8,7 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
-public interface AdapterService {
+public interface AdapterService extends IService<File> {
     String adapterName = "";
 
     File getFileInfo(String path, String username);
@@ -28,4 +29,6 @@ public interface AdapterService {
     File rename(String item, String name, String username);
 
     boolean delete(String path, String type, String username) throws IOException;
+
+    boolean move(String dest, String path, String type, String username);
 }

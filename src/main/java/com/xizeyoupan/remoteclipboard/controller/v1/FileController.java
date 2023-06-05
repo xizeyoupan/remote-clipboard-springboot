@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -151,13 +152,37 @@ public class FileController {
                 for (Map<String, String> stringStringMap : list) {
                     String path = stringStringMap.get("path");
                     String type = stringStringMap.get("type");
-                    adapterService.delete(path,type,username);
+                    adapterService.delete(path, type, username);
                 }
 
                 if (!pathParameter.endsWith("/")) pathParameter += '/';
                 List<File> files = adapterService.index(pathParameter, username);
                 Index index = getIndex(adapter, storages, pathParameter, files);
                 return ResponseEntity.ok(index);
+            }
+            case "move" -> {
+                String path = request.getParameter("path");
+                if (ObjectUtils.isEmpty(path)) {
+                    path = adapter + "://";
+                }
+                if (!path.endsWith("/")) path += '/';
+                String items = request.getParameter("items");
+                String dest = request.getParameter("item");
+
+                ObjectMapper objectMapper = new ObjectMapper();
+
+                List<Map<String, String>> list = objectMapper.readValue(items, new TypeReference<>() {
+                });
+                for (Map<String, String> stringStringMap : list) {
+                    String filePath = stringStringMap.get("path");
+                    String type = stringStringMap.get("type");
+                    adapterService.move(dest, filePath, type, username);
+                }
+
+                List<File> files = adapterService.index(path, username);
+                Index index = getIndex(adapter, storages, path, files);
+                return ResponseEntity.ok(index);
+
             }
             default -> {
             }
