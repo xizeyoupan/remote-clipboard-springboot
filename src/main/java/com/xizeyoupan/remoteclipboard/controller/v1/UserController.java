@@ -2,6 +2,7 @@ package com.xizeyoupan.remoteclipboard.controller.v1;
 
 import com.xizeyoupan.remoteclipboard.entity.User;
 import com.xizeyoupan.remoteclipboard.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,14 +22,14 @@ import java.util.Map;
 @RequestMapping("/api/v1/user")
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> login(@RequestBody User user, HttpSession session, HttpServletResponse response) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody User user, HttpSession session) {
         Map<String, Object> map = new HashMap<>();
 
         if (ObjectUtils.isEmpty(user) || ObjectUtils.isEmpty(user.getPassword()) || ObjectUtils.isEmpty(user.getUsername())) {
@@ -57,6 +56,7 @@ public class UserController {
         map.put("msg", "Success");
         session.setAttribute("username", user.getUsername());
         session.setAttribute("password", user.getPassword());
+        session.setAttribute("id", user.getId());
 
         return new ResponseEntity<>(map, HttpStatus.OK);
 

@@ -140,6 +140,7 @@ public class LocalAdapterServiceImpl extends ServiceImpl<FileMapper, File> imple
         QueryWrapper<File> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", user.getId());
         queryWrapper.like("path", path + "%" + filter + "%");
+        queryWrapper.notLike("path", path + "%" + filter + "%/%");
         return fileMapper.selectList(queryWrapper);
     }
 

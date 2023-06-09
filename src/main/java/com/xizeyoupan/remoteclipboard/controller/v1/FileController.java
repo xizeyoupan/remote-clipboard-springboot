@@ -119,7 +119,13 @@ public class FileController {
                 if (ObjectUtils.isEmpty(mimeType)) {
                     mimeType = "application/octet-stream";
                 }
-                return ResponseEntity.ok().contentLength(file.getFileSize()).contentType(MediaType.parseMediaType(mimeType)).body(new InputStreamResource(fileInputStream));
+
+                return ResponseEntity
+                        .ok()
+                        .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                        .contentLength(file.getFileSize())
+                        .contentType(MediaType.parseMediaType(mimeType))
+                        .body(new InputStreamResource(fileInputStream));
 
             }
             case "search" -> {
