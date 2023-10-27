@@ -2,6 +2,8 @@ package com.xizeyoupan.remoteclipboard.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.sardine.Sardine;
+import com.github.sardine.SardineFactory;
 import com.xizeyoupan.remoteclipboard.entity.File;
 import com.xizeyoupan.remoteclipboard.entity.User;
 import com.xizeyoupan.remoteclipboard.mapper.FileMapper;
@@ -13,14 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
-import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -28,33 +26,39 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class LocalAdapterServiceImpl extends ServiceImpl<FileMapper, File> implements AdapterService {
-    private final String adapterName = "local";
+public class JianguoyunAdapterServiceImpl extends ServiceImpl<FileMapper, File> implements AdapterService {
+    private final String adapterName = "jianguoyun";
     private final FileMapper fileMapper;
     private final UserService userService;
     private final FileDBService fileDBService;
+    private Sardine sardine;
 
-    @Value("${app.adapter.local-adapter.file-path}")
-    private String localSavePath;
+    @Value("${app.adapter.jianguoyun-adapter.file-path}")
+    private String savePath;
 
-    public LocalAdapterServiceImpl(FileMapper fileMapper, UserService userService, FileDBService fileDBService) {
+    @Value("${app.adapter.jianguoyun-adapter.username}")
+    private String username;
+
+    @Value("${app.adapter.jianguoyun-adapter.password}")
+    private String password;
+
+    @Value("${app.adapter.jianguoyun-adapter.url}")
+    private String url;
+
+    public JianguoyunAdapterServiceImpl(FileMapper fileMapper, UserService userService, FileDBService fileDBService) throws IOException {
         this.fileMapper = fileMapper;
         this.userService = userService;
         this.fileDBService = fileDBService;
     }
 
     @PostConstruct
-    void mkdir() throws IOException {
-        log.info("File path: " + localSavePath);
-        Path path = Paths.get(localSavePath);
-        Files.createDirectories(path);
+    public void setSardine() throws IOException {
+        this.sardine = SardineFactory.begin(username, password);
     }
 
-
     @Override
-    public InputStream getInputStream(File file) throws FileNotFoundException {
-        String s = localSavePath + file.getUuid();
-        return new FileInputStream(s);
+    public InputStream getInputStream(File file) throws IOException {
+        return sardine.get(url + savePath + file.getUuid());
     }
 
     @Override
@@ -85,19 +89,16 @@ public class LocalAdapterServiceImpl extends ServiceImpl<FileMapper, File> imple
         }
 
         InputStream inputStream = multipartFile.getInputStream();
-        String name = localSavePath + uuid;
-        log.info("File save locally to: " + localSavePath);
-        FileOutputStream fileOutputStream = new FileOutputStream(name);
-        StreamUtils.copy(inputStream, fileOutputStream);
-        inputStream.close();
-        fileOutputStream.close();
+        String name = savePath + uuid;
+        log.info("File save to jiangouyun on: " + name);
+        log.warn(url + name);
+        sardine.put(url + name, inputStream.readAllBytes());
 
         if (exists) fileMapper.updateById(file);
         else fileMapper.insert(file);
 
         return file;
     }
-
 
     @Override
     public File newfile(String path, String name, String username) throws IOException {
@@ -106,24 +107,26 @@ public class LocalAdapterServiceImpl extends ServiceImpl<FileMapper, File> imple
         File file = new File();
         fileDBService.setFile(path, name, user, uuid, file, 0L, adapterName);
 
-        String fileName = localSavePath + uuid;
-        log.info("File save to: " + localSavePath);
-        FileOutputStream fileOutputStream = new FileOutputStream(fileName);
-        fileOutputStream.close();
+        String fileName = savePath + uuid;
+        log.info("File save to jiangouyun on: " + fileName);
+
+        log.warn(url + fileName);
+
+        sardine.put(url + fileName, new byte[]{});
 
         fileMapper.insert(file);
         return file;
     }
-
 
     @Override
     public boolean delete(String path, String type, String username) throws IOException {
         if (Objects.equals(type, "file")) {
             File file = fileDBService.getFileInfo(path, username);
             fileMapper.deleteById(file);
-            Path localPath = Paths.get(localSavePath + file.getUuid());
-            Files.delete(localPath);
+
+            sardine.delete(url + savePath + file.getUuid());
             return true;
+
         } else if (Objects.equals(type, "dir")) {
             File dir = fileDBService.getFileInfo(path, username);
             fileMapper.deleteById(dir);
@@ -138,13 +141,12 @@ public class LocalAdapterServiceImpl extends ServiceImpl<FileMapper, File> imple
 
             for (File file : files) {
                 if (file.getType().equals("dir")) continue;
-                Path localPath = Paths.get(localSavePath + file.getUuid());
-                log.info("Delete local file: " + localPath);
-                Files.delete(localPath);
+                String remotePath = savePath + file.getUuid();
+                log.info("Delete file: " + remotePath);
+                sardine.delete(url + remotePath);
             }
             return true;
         }
         return false;
     }
-
 }

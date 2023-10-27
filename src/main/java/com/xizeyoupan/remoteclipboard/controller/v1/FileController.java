@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xizeyoupan.remoteclipboard.entity.File;
 import com.xizeyoupan.remoteclipboard.entity.Index;
 import com.xizeyoupan.remoteclipboard.service.AdapterService;
+import com.xizeyoupan.remoteclipboard.service.FileDBService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
@@ -30,6 +31,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -42,10 +44,12 @@ import java.util.Map;
 public class FileController {
     private final ApplicationContext applicationContext;
     private AdapterService adapterService;
+    private FileDBService fileDBService;
     private List<String> storages;
 
-    public FileController(ApplicationContext applicationContext) {
+    public FileController(ApplicationContext applicationContext, FileDBService fileDBService) {
         this.applicationContext = applicationContext;
+        this.fileDBService = fileDBService;
     }
 
     public AdapterService getAdapterService(String adapter) throws ClassNotFoundException {
@@ -69,15 +73,15 @@ public class FileController {
                 }
                 if (!path.endsWith("/")) path += '/';
 
-                List<File> files = adapterService.index(path, username);
+                List<File> files = fileDBService.index(path, username);
                 Index index = getIndex(adapter, storages, path, files);
                 return ResponseEntity.ok(index);
             }
 
             case "download" -> {
                 String path = request.getParameter("path");
-                File file = adapterService.getFileInfo(path, username);
-                FileInputStream fileInputStream = adapterService.getFileInputStream(file);
+                File file = fileDBService.getFileInfo(path, username);
+                InputStream inputStream = adapterService.getInputStream(file);
                 HttpHeaders headers = new HttpHeaders();
                 headers.add("Content-Disposition", "attachment;filename=" + URLEncoder.encode(file.getBasename(), StandardCharsets.UTF_8));
 
@@ -86,7 +90,7 @@ public class FileController {
                     mimeType = "application/octet-stream";
                 }
 
-                return ResponseEntity.ok().headers(headers).contentLength(file.getFileSize()).contentType(MediaType.parseMediaType(mimeType)).body(new InputStreamResource(fileInputStream));
+                return ResponseEntity.ok().headers(headers).contentLength(file.getFileSize()).contentType(MediaType.parseMediaType(mimeType)).body(new InputStreamResource(inputStream));
             }
 
             case "newfolder" -> {
@@ -94,8 +98,8 @@ public class FileController {
                 String path = request.getParameter("path");
                 if (!path.endsWith("/")) path += '/';
 
-                adapterService.newfolder(path, name, username);
-                List<File> files = adapterService.index(path, username);
+                fileDBService.newfolder(path, name, username, adapter);
+                List<File> files = fileDBService.index(path, username);
                 Index index = getIndex(adapter, storages, path, files);
                 return ResponseEntity.ok(index);
             }
@@ -106,15 +110,15 @@ public class FileController {
                 if (!path.endsWith("/")) path += '/';
 
                 adapterService.newfile(path, name, username);
-                List<File> files = adapterService.index(path, username);
+                List<File> files = fileDBService.index(path, username);
                 Index index = getIndex(adapter, storages, path, files);
                 return ResponseEntity.ok(index);
             }
 
             case "preview" -> {
                 String path = request.getParameter("path");
-                File file = adapterService.getFileInfo(path, username);
-                FileInputStream fileInputStream = adapterService.getFileInputStream(file);
+                File file = fileDBService.getFileInfo(path, username);
+                InputStream inputStream = adapterService.getInputStream(file);
                 String mimeType = file.getMimeType();
                 if (ObjectUtils.isEmpty(mimeType)) {
                     mimeType = "application/octet-stream";
@@ -125,7 +129,7 @@ public class FileController {
                         .header(HttpHeaders.ACCEPT_RANGES, "bytes")
                         .contentLength(file.getFileSize())
                         .contentType(MediaType.parseMediaType(mimeType))
-                        .body(new InputStreamResource(fileInputStream));
+                        .body(new InputStreamResource(inputStream));
 
             }
             case "search" -> {
@@ -133,7 +137,7 @@ public class FileController {
                 String path = request.getParameter("path");
                 if (!path.endsWith("/")) path += '/';
 
-                List<File> files = adapterService.search(path, username, filter);
+                List<File> files = fileDBService.search(path, username, filter);
                 Index index = getIndex(adapter, storages, path, files);
                 return ResponseEntity.ok(index);
             }
@@ -143,8 +147,8 @@ public class FileController {
                 String path = request.getParameter("path");
                 if (!path.endsWith("/")) path += '/';
 
-                adapterService.rename(item, name, username);
-                List<File> files = adapterService.index(path, username);
+                fileDBService.rename(item, name, username);
+                List<File> files = fileDBService.index(path, username);
                 Index index = getIndex(adapter, storages, path, files);
                 return ResponseEntity.ok(index);
             }
@@ -162,7 +166,7 @@ public class FileController {
                 }
 
                 if (!pathParameter.endsWith("/")) pathParameter += '/';
-                List<File> files = adapterService.index(pathParameter, username);
+                List<File> files = fileDBService.index(pathParameter, username);
                 Index index = getIndex(adapter, storages, pathParameter, files);
                 return ResponseEntity.ok(index);
             }
@@ -182,10 +186,10 @@ public class FileController {
                 for (Map<String, String> stringStringMap : list) {
                     String filePath = stringStringMap.get("path");
                     String type = stringStringMap.get("type");
-                    adapterService.move(dest, filePath, type, username);
+                    fileDBService.move(dest, filePath, type, username);
                 }
 
-                List<File> files = adapterService.index(path, username);
+                List<File> files = fileDBService.index(path, username);
                 Index index = getIndex(adapter, storages, path, files);
                 return ResponseEntity.ok(index);
 

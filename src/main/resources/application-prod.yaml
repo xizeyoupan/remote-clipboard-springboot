@@ -3,6 +3,11 @@ app:
   adapter:
     local-adapter:
       file-path: ${LOCAL_ADAPTER_FILE_PATH:/app/file_data/}
+    jianguoyun-adapter:
+      file-path: ${JIANGUOYUN_ADAPTER_FILE_PATH:/rc/}
+      url: ${JIANGUOYUN_ADAPTER_URL:https://dav.jianguoyun.com/dav}
+      username: ${JIANGUOYUN_ADAPTER_USERNAME}
+      password: ${JIANGUOYUN_ADAPTER_PASSWORD}
 
 server:
   port: ${PORT:8233}
