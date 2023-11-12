@@ -45,15 +45,16 @@ public class JianguoyunAdapterServiceImpl extends ServiceImpl<FileMapper, File> 
     @Value("${app.adapter.jianguoyun-adapter.url}")
     private String url;
 
-    public JianguoyunAdapterServiceImpl(FileMapper fileMapper, UserService userService, FileDBService fileDBService) throws IOException {
+    public JianguoyunAdapterServiceImpl(FileMapper fileMapper, UserService userService, FileDBService fileDBService) {
         this.fileMapper = fileMapper;
         this.userService = userService;
         this.fileDBService = fileDBService;
     }
 
     @PostConstruct
-    public void setSardine() throws IOException {
+    public void setSardine() {
         this.sardine = SardineFactory.begin(username, password);
+        this.sardine.enablePreemptiveAuthentication(url);
     }
 
     @Override
@@ -92,7 +93,9 @@ public class JianguoyunAdapterServiceImpl extends ServiceImpl<FileMapper, File> 
         String name = savePath + uuid;
         log.info("File save to jiangouyun on: " + name);
         log.warn(url + name);
-        sardine.put(url + name, inputStream.readAllBytes());
+
+        sardine.exists(url + name);
+        sardine.put(url + name, inputStream);
 
         if (exists) fileMapper.updateById(file);
         else fileMapper.insert(file);
@@ -112,7 +115,9 @@ public class JianguoyunAdapterServiceImpl extends ServiceImpl<FileMapper, File> 
 
         log.warn(url + fileName);
 
-        sardine.put(url + fileName, new byte[]{});
+        sardine.exists(url + fileName);
+        sardine.put(url + fileName, InputStream.nullInputStream());
+
 
         fileMapper.insert(file);
         return file;
